@@ -236,13 +236,12 @@ static int eeprom_open(struct inode *inode, struct file *file)
 		ret = -EBUSY;
 		goto Done;
 	}
-
+ 
 	/*
  	 * Increment the module use counter
  	 */
 	try_module_get(THIS_MODULE);
 
-    /* file->size = EEPROM_PAGE_SIZE; */
 Done:
 	d_printk(2, "lock=%d\n", eeprom_lock);
 	return ret;
@@ -267,7 +266,6 @@ static int eeprom_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-#if 0
 loff_t eeprom_llseek(struct file *filp, loff_t offset, int whence)
 {
     loff_t newpos;
@@ -278,11 +276,11 @@ loff_t eeprom_llseek(struct file *filp, loff_t offset, int whence)
 		break;
 	
 	case SEEK_CUR:
-        newpos = filp->f_pos + off;
+        newpos = filp->f_pos + offset;
 		break;
 
     case SEEK_END:
-        newpos = filp->size + off;
+        newpos = EEPROM_PAGE_SIZE * EEPROM_PAGE_NUM + offset;
         break;
 
     default:
@@ -293,7 +291,6 @@ loff_t eeprom_llseek(struct file *filp, loff_t offset, int whence)
     filp->f_pos = newpos;
     return newpos;
 }
-#endif
 
 /* 
  * Device read
@@ -400,7 +397,7 @@ Done:
 static struct file_operations eeprom_fops = {
 	.read = eeprom_read,
 	.write = eeprom_write,
-/*	.llseek = eeprom_llseek, */
+	.llseek = eeprom_llseek,
 	.open = eeprom_open,
 	.release = eeprom_release
 };

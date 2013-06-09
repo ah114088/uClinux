@@ -54,14 +54,10 @@ int main(int argc, char **argv)
 			goto Done;
 		}
 
-		/* dummy read instead of lseek() */
-        for (i=0; i< page*8; i++) {
-		    if (read(fd, buf, 8) != 8) {
-				fprintf(stderr, "%s: unable to seek %s to page %d\n", 
-					app_name, dev_name, page);
-				goto Done;
-			}
-			addr += 8;
+		if (lseek(fd, page << 6, SEEK_SET) == -1) {
+			fprintf(stderr, "%s: unable to lseek %s: %s\n", 
+				app_name, dev_name, strerror(errno));
+			goto Done;
 		}
 
 		for (i=0; i< 8*npages; i++) {
@@ -94,26 +90,11 @@ int main(int argc, char **argv)
 		text = argv[3];
 		len = strlen(text);
 
-		/*
-		 * read 'offset' bytes as to mimic lseek(fd, offset, SEEK_SET);
-		 */
-#if 1
-		while (offset > 0) {	
-			if (offset > 8) {
-                read(fd, buf, 8);
-				offset -= 8;
-			} else {
-                read(fd, buf, offset);
-				offset = 0;
-			}
-		}
-#else
-		if (offset != 0 || lseek(fd, offset, SEEK_SET) == -1) {
+		if (lseek(fd, offset, SEEK_SET) == -1) {
 			fprintf(stderr, "%s: unable to lseek %s: %s\n", 
 				app_name, dev_name, strerror(errno));
 			goto Done;
 		}
-#endif
 		
 		if (write(fd, text, len) != len) {
 			fprintf(stderr, "%s: unable to write %s: %s\n", 
